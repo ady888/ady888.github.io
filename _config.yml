@@ -1,0 +1,8 @@
+excerpt_separator: ""
+pygments: true
+markdown: kramdown
+url: http://ady888.github.io
+title: Melbourne
+tagline: Most Liveable City 
+description: Born in Melbourne, reside in Melbourne.
+paginate: 10
