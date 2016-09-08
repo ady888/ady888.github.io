@@ -1,0 +1,6 @@
+---
+published: true
+title: Hi There
+layout: post
+---
+Hello people :)
