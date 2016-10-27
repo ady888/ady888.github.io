@@ -8,7 +8,7 @@ layout: post
 A good question to ask yourself before investing nearly $695 USD for a license of SketchUp Pro. Especially since, <strong>for many uses, SketchUp (free version) is more than enough</strong> .
 
 The differences between the version of SketchUp Free and Pro version become more important with each new version of SketchUp. Buyers of SketchUp Pro license finally have the feeling of paying for something that is not available in SketchUp free. Too bad it's partly because of the features are removed from the free version, like importing DWG / DXF files.
-
+<iframe src="https://www.youtube.com/embed/gl1W6rMYEiI" allowfullscreen="true" style="margin:0px auto; display: block;" height="240" frameborder="0" width="426"></iframe>
 <strong>major differences between SketchUp and SketchUp Pro</strong>
 
 SketchUp Pro features:
