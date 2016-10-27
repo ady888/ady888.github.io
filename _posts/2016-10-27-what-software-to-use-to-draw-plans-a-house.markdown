@@ -38,7 +38,6 @@ For more advance features you'll need to make some investment. Among the softwar
 <ul>
  	<li>This computer-assisted design software allows you to draw diagrams and technical drawings;</li>
 <li>it proves a helpful assistance in preparing a construction project.</li>
-</li>
 </ul>
 <h2>Home Styler</h2>
 <ul>
