@@ -3,11 +3,11 @@ published: true
 title: What software to use to draw plans a house
 layout: post
 ---
-Software used to draw plans of a house are quite numerous. Some of them are easy to use, others - more <a href="/">sophisticated</a> and prove less accessible to the general public.
+Software used to draw plans of a house are quite numerous. Some of them are easy to use, others - more sophisticated and proves less accessible to the general public.
 
-These tools are essential to refine a building project and its feasibility .
+These software tools are essential to refine a building project and its feasibility .
 
-A house plan editor provides various functions. It generally allows:
+<strong>A house plan editor provides various functions. It generally allows:</strong>
 
 •	draw walls and partitions;
 
@@ -30,17 +30,15 @@ A house plan editor provides various functions. It generally allows:
 •	print map.
 
 
-Good to know  : some drafring software - free or paid - include a forum, a video tutorial, FAQs and a user guide.
+<h2>Using Free Software for your house plans.</h2>
+<strong>To learn tracing plans for fun or with the objective of working on a draft, it is not necessary to invest money, as many free application are available. </strong>
+For more advance features you'll need to make some investment. Among the software and services of good quality and enjoyable to use include:
 
-house plans: free software
-To learn tracing plans for fun or with the objective of working on a draft, it is not necessary to invest. Internet can draw plans house either:
-•	downloading the free software to save it in the memory of the computer: a practical solution for use offline;
-•	or by accessing the website via the Internet without downloading the application. In this case, Web connection is essential for each use.
-Among the software and services of good quality and enjoyable to use include:
-•	          CAD®
+<h2>CAD®</h2>
 o	This computer-assisted design software allows you to draw diagrams and technical drawings;
 o	it proves a helpful assistance in preparing a construction project.
-•	Home Styler :
+
+<h2>Home Styler</h2>
 o	This Web service is considered one of the best tools of the time in the field of creation of house plans;
 o	the passage 3D is instantaneous, the plan can be realized emailed or shared on social networks;
 o	creating an online account is optional, but saves plans to return to it later;
