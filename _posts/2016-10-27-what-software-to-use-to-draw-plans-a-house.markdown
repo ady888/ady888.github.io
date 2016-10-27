@@ -5,7 +5,7 @@ layout: post
 ---
 Software used to draw plans of a house are quite numerous. Some of them are easy to use, others - more sophisticated and proves less accessible to the general public.
 
-These software tools are essential to refine a building project and its feasibility .
+<img src="http://i.imgur.com/8Sn27RJ.jpg" alt="drafting" style="margin:0px 10px; width:auto; height:auto; max-height:300px; max-width:35%" align="right">These software tools are essential to refine a building project and its feasibility .
 
 <strong>A house plan editor provides various functions. It generally allows:</strong>
 
@@ -69,3 +69,11 @@ For more advance features you'll need to make some investment. Among the softwar
  <strong>Archifacile®</strong>  : a very simplified software that caters to beginners, it is a kind of basic architecture.
 
 <strong>Good to know</strong>  : the big names like IKEA®, Alinea® or Leroy Merlin® make available online tools so that each user can design the kitchen of her dreams.
+
+<iframe src="https://www.youtube.com/embed/TWCVa6PVrQw" allowfullscreen="true" style="margin:0px auto; display: block;" height="240" frameborder="0" width="426"></iframe>
+<p>Purchase or download your fantasy 3D remodeling software now so you may create the house you've always desired! You must start your property by constructing the Small home.  Whether you're purchasing a small house, working with a very small house designer, or designing your own, understanding how to draw a floor program can help you communicate your suggestions and turn them in a real, workable design.</p>
+
+<p>With premium, free and very low cost programs in the marketplace, it will become essential to understand what you want out of your software so as to earn a well-informed choice. This computer software is good with unique platforms.  If you're choosing free software, a trial deadline isn't a problem, so even better! This computer software is somewhat simple to learn and if you're an architect, Engineer or Interior Decorator but need to have technical understanding of drafting, then it's an exact intelligent choice.  CAD software should create accurate benefits, but I discovered this product does not.  It's important to keep in mind that any 2D CAD software is just like its developers, so when asking the question whether it is any great really is dependent upon the individual program, which explains why you should limit your options before trying a totally free trial of each.</p> 
+
+<iframe src="https://www.youtube.com/embed/FFDHScQFscw" allowfullscreen="true" style="margin:0px auto; display: block;" height="240" frameborder="0" width="426"></iframe>
+
