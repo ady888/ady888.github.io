@@ -1,6 +1,6 @@
 ---
 published: true
-title: What software to use to draw plans a house
+title: Software to use to draw house/building plans 
 layout: post
 ---
 Software used to draw plans of a house are quite numerous. Some of them are easy to use, others - more sophisticated and proves less accessible to the general public.
