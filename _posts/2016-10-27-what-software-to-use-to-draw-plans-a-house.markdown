@@ -10,14 +10,23 @@ These tools are essential to refine a building project and its feasibility .
 A house plan editor provides various functions. It generally allows:
 
 •	draw walls and partitions;
+
 •	trace parts of the house to the desired dimensions.
+
 •	take a virtual 3D tour ;
+
 •	draw the external view from outside the building;
+
 •	place the various openings such as doors and windows;
+
 •	place objects such as furniture;
+
 •	position the stairs;
+
 •	create levels (basement, ground floor, first floor);
+
 •	save the map in widely used formats;
+
 •	print map.
 
 
