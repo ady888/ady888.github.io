@@ -1,6 +1,6 @@
 ---
 published: true
-title: Hi There
+title: Hi There People
 layout: post
 ---
-Hello people :)
+Hello there people :)
