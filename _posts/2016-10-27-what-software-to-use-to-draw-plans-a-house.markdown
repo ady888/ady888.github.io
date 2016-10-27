@@ -35,34 +35,36 @@ These software tools are essential to refine a building project and its feasib
 For more advance features you'll need to make some investment. Among the software and services of good quality and enjoyable to use include:
 
 <h2>CAD®</h2>
-o	This computer-assisted design software allows you to draw diagrams and technical drawings;
-o	it proves a helpful assistance in preparing a construction project.
-
+<ul>
+ 	<li>This computer-assisted design software allows you to draw diagrams and technical drawings;</li>
+<li>it proves a helpful assistance in preparing a construction project.</li>
+</li>
+</ul>
 <h2>Home Styler</h2>
 <ul>
- 	<li>This Web service is considered one of the best tools of the time in the field of creation of house plans;</li>
- 	<li>the passage 3D is instantaneous, the plan can be realized emailed or shared on social networks;</li>
- 	<li>creating an online account is optional, but saves plans to return to it later;</li>
- 	<li>Attention, this service is not translated in to other languages, so it is essential to have a good level of English to use. However, imperial measures can be converted to meters.</li>
+ 	<li>This Web service is considered one of the best tools for developing house plans;</li>
+ 	<li>the 3D rendering is instantaneous, the plan can be realized emailed or shared on social networks;</li>
+ 	<li>creating an online account enables you to save your plans to return to it later;</li>
+ 	<li>Essential to have a good level of English as no translation options are available.</li>
 </ul>
-]<strong>          Architecte®</strong>  :
+<strong>Architecte®</strong>  :
 <ul>
- 	<li>this is a very interesting tool developed in partnership with an architect;</li>
- 	<li>it offers the opportunity to work on a draft to obtain a scale plan of professional quality.</li>
+ 	<li>An interesting tool that was developed in partnership with an architect;</li>
+ 	<li>It offers the opportunity to work on a draft to obtain a scale plan of professional quality.</li>
 </ul>
 
-<strong>Sweet Home '3D</strong>  :
+<strong>Sweet Home 3D</strong>  :
 <ul>
  	<li>this software offers dozens of models in three dimensions that can be freely imported;</li>
  	<li>it also allows you to draw a house plan and place objects, furniture, vehicles;</li>
- 	<li>it includes many textures.</li>
+ 	<li>Includes many textures.</li>
 </ul>
 
-<strong>           Kozikaza®</strong>  :
+<strong>Kozikaza®</strong>  :
 <ul>
- 	<li>This freeware 3D house plan requires no download to devise a plan, develop housing, decorate the interior of the house;</li>
- 	<li>tracing a house plan is easy and fast, and the record is quite realistic;</li>
- 	<li>it is also possible to create your own furniture.</li>
+ 	<li>This freeware 3D house plan requires no download to create a plan, and decorate the interior of the building;</li>
+ 	<li>tracing a plan is easy and fast.</li>
+ 	<li>Possible to create your own furniture.</li>
 </ul>
 
  <strong>Archifacile®</strong>  : a very simplified software that caters to beginners, it is a kind of basic architecture.
