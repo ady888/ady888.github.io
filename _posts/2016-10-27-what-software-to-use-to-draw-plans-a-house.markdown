@@ -39,20 +39,33 @@ o	This computer-assisted design software allows you to draw diagrams and technic
 o	it proves a helpful assistance in preparing a construction project.
 
 <h2>Home Styler</h2>
-o	This Web service is considered one of the best tools of the time in the field of creation of house plans;
-o	the passage 3D is instantaneous, the plan can be realized emailed or shared on social networks;
-o	creating an online account is optional, but saves plans to return to it later;
-o	Attention, this service is not translated in to other languages, so it is essential to have a good level of English to use. However, imperial measures can be converted to meters.
-•	          Architecte®  :
-o	this is a very interesting tool developed in partnership with an architect;
-o	it offers the opportunity to work on a draft to obtain a scale plan of professional quality.
-•	Sweet Home '3D  :
-o	this software offers dozens of models in three dimensions that can be freely imported;
-o	it also allows you to draw a house plan and place objects, furniture, vehicles;
-o	it includes many textures.
-•	           Kozikaza®  :
-o	This freeware 3D house plan requires no download to devise a plan, develop housing, decorate the interior of the house;
-o	tracing a house plan is easy and fast, and the record is quite realistic;
-o	it is also possible to create your own furniture.
-•	Archifacile®  : a very simplified software that caters to beginners, it is a kind of basic architecture.
-Good to know  : the big names like IKEA®, Alinea® or Leroy Merlin® make available online tools so that each user can design the kitchen of her dreams.
+<ul>
+ 	<li>This Web service is considered one of the best tools of the time in the field of creation of house plans;</li>
+ 	<li>the passage 3D is instantaneous, the plan can be realized emailed or shared on social networks;</li>
+ 	<li>creating an online account is optional, but saves plans to return to it later;</li>
+ 	<li>Attention, this service is not translated in to other languages, so it is essential to have a good level of English to use. However, imperial measures can be converted to meters.</li>
+</ul>
+</li>
+ 	<li><strong>          Architecte®</strong>  :
+<ul>
+ 	<li>this is a very interesting tool developed in partnership with an architect;</li>
+ 	<li>it offers the opportunity to work on a draft to obtain a scale plan of professional quality.</li>
+</ul>
+</li>
+ 	<li><strong>Sweet Home '3D</strong>  :
+<ul>
+ 	<li>this software offers dozens of models in three dimensions that can be freely imported;</li>
+ 	<li>it also allows you to draw a house plan and place objects, furniture, vehicles;</li>
+ 	<li>it includes many textures.</li>
+</ul>
+</li>
+ 	<li><strong>           Kozikaza®</strong>  :
+<ul>
+ 	<li>This freeware 3D house plan requires no download to devise a plan, develop housing, decorate the interior of the house;</li>
+ 	<li>tracing a house plan is easy and fast, and the record is quite realistic;</li>
+ 	<li>it is also possible to create your own furniture.</li>
+</ul>
+</li>
+ 	<li><strong>Archifacile®</strong>  : a very simplified software that caters to beginners, it is a kind of basic architecture.</li>
+</ul>
+<strong>Good to know</strong>  : the big names like IKEA®, Alinea® or Leroy Merlin® make available online tools so that each user can design the kitchen of her dreams.
