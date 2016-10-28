@@ -38,4 +38,4 @@ SketchUp Pro features:
 
 For architects, its difficult to do without the <strong>import and export of DXF or DWG files for trade with the partners</strong> involved in a construction project. LayOut and is handy for quickly making an attractive presentation folder with perspective views, elevations, 2D sections and plans from several different models.
 
-For carpenters and trades working in furniture construction, the appearance of Solid tools with version 8 was a good surprise. These tools are very useful <strong>for modeling very quickly the parts assemblies</strong> . LayOut and can print to scale the production drawings of each piece with a cartridge.
+For carpenters and trades working in <a href="https://www.design.org.au/designindustry/design-disciplines-2/furniture-design" MidP4>furniture construction</a>, the appearance of Solid tools with version 8 was a good surprise. These tools are very useful <strong>for modeling very quickly the parts assemblies</strong> . LayOut and can print to scale the production drawings of each piece with a cartridge.
