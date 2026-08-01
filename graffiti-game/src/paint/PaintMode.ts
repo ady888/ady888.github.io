@@ -1,5 +1,6 @@
+import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { Ray } from "@babylonjs/core/Culling/ray";
 import { Scalar } from "@babylonjs/core/Maths/math.scalar";
-import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
 import type { Scene } from "@babylonjs/core/scene";
 
@@ -47,6 +48,10 @@ export interface PaintHudState {
   drips: number;
   repositioning: boolean;
   guided: GuidedStatus | null;
+  /** True while the spray trigger is held (mouse button or Space). */
+  trigger: boolean;
+  /** How much paint has gone down since entering paint mode. */
+  sprayedThisSession: number;
 }
 
 /**
@@ -80,6 +85,8 @@ export class PaintMode {
   private onSurface = false;
   private repositioning = false;
   private cameraModeBeforePaint = false;
+  /** Ops laid down since entering, shown in the HUD so "nothing happened" is visible. */
+  private sprayedOps = 0;
   /** Every panel touched in this session — a piece can span several. */
   private readonly touched = new Set<PaintableSurface>();
   /** Non-null while a guided artwork is being followed. */
@@ -112,6 +119,18 @@ export class PaintMode {
 
   get guidedSession(): GuidedSession | null {
     return this.guided;
+  }
+
+  /**
+   * The spray trigger.
+   *
+   * The mouse button is the intended control, but Space works too. Painting is
+   * the whole game, and a single input path is a single point of failure — if
+   * the button ever fails to reach the canvas, the player still has a way to
+   * put paint on a wall.
+   */
+  private get sprayHeld(): boolean {
+    return this.input.primaryDown || this.input.isKeyDown("Space");
   }
 
   /**
@@ -163,6 +182,7 @@ export class PaintMode {
     this.repositioning = false;
     this.touched.clear();
     this.touched.add(surface);
+    this.sprayedOps = 0;
 
     // Hand the mouse back to the player as a drawing cursor.
     this.input.releasePointerLock();
@@ -242,7 +262,7 @@ export class PaintMode {
 
     const can = this.inventory.current;
     const cap = this.inventory.capProfile;
-    const wantsSpray = this.input.primaryDown && !this.stencilMode;
+    const wantsSpray = this.sprayHeld && !this.stencilMode;
     const hasPaint = Boolean(can && can.amount > 0);
 
     const hit = this.pickSurface(surface);
@@ -276,6 +296,7 @@ export class PaintMode {
           this.wasSpraying,
         );
         this.inventory.consume(deltaSeconds);
+        this.sprayedOps += 1;
         this.audio.updateSpray(pressure, cap.radius);
         this.bus.emit("paint:strokeTick", { surfaceId: surface.id, coverage: surface.coverage });
         this.wasSpraying = true;
@@ -329,7 +350,7 @@ export class PaintMode {
 
     const can = this.inventory.current;
     const hasPaint = Boolean(can && can.amount > 0);
-    const wantsSpray = this.input.primaryDown && hasPaint && !guided.isRepositioning;
+    const wantsSpray = this.sprayHeld && hasPaint && !guided.isRepositioning;
 
     if (wantsSpray) this.startSpraying();
     else this.stopSpraying();
@@ -365,6 +386,7 @@ export class PaintMode {
           target.spray(to.u, to.v, radiusPx, colour, alpha, cap.scatter * 0.6, false);
         }
         this.inventory.consume(deltaSeconds);
+        this.sprayedOps += 1;
         this.touched.add(target);
         this.bus.emit("paint:strokeTick", { surfaceId: target.id, coverage: target.coverage });
       },
@@ -439,6 +461,8 @@ export class PaintMode {
       drips: surface?.activeDripCount ?? 0,
       repositioning: this.repositioning,
       guided: this.guided ? this.guided.status() : null,
+      trigger: this.sprayHeld,
+      sprayedThisSession: this.sprayedOps,
     };
   }
 
@@ -528,46 +552,95 @@ export class PaintMode {
   }
 
   /** Picks the cursor against one specific surface, ignoring its neighbours. */
-  private pickOn(surface: PaintableSurface): { u: number; v: number; distance: number } | null {
-    const pick = this.scene.pick(
+  /**
+   * Where the cursor meets a surface, by ray-plane intersection.
+   *
+   * This deliberately does NOT rely on mesh picking. The paint panels are
+   * invisible until they carry paint, they have frozen world matrices, and
+   * there are ~60 of them — any one of those can quietly make `scene.pick`
+   * return nothing, and when it does the player gets a spray cursor that
+   * paints absolutely nothing with no indication why. Intersecting the plane
+   * arithmetically cannot fail for a surface we already know we are at.
+   */
+  private uvOnSurface(
+    surface: PaintableSurface,
+    ray: Ray,
+  ): { u: number; v: number; distance: number } | null {
+    const normal = surface.normal;
+    const denominator = Vector3.Dot(ray.direction, normal);
+    // Facing the back of the panel, or exactly edge-on.
+    if (denominator > -1e-4) return null;
+
+    const distance = Vector3.Dot(surface.worldCentre.subtract(ray.origin), normal) / denominator;
+    if (distance < 0 || distance > PAINT_RANGE + 3) return null;
+
+    const point = ray.origin.add(ray.direction.scale(distance));
+    const offset = point.subtract(surface.worldCentre);
+
+    // Surface-local axes: `along` runs across its width, world up its height.
+    const along = new Vector3(-normal.z, 0, normal.x);
+    const lateral = offset.x * along.x + offset.z * along.z;
+    const vertical = offset.y;
+
+    const u = lateral / surface.worldWidth + 0.5;
+    const v = vertical / surface.worldHeight + 0.5;
+    if (u < 0 || u > 1 || v < 0 || v > 1) return null;
+    return { u, v, distance };
+  }
+
+  /** The camera ray through the current mouse position. */
+  private cursorRay(): Ray {
+    const ray = this.scene.createPickingRay(
       this.input.pointerX,
       this.input.pointerY,
-      (mesh: AbstractMesh) => mesh === surface.mesh,
+      Matrix.Identity(),
+      this.player.camera,
     );
-    if (!pick?.hit || pick.pickedMesh !== surface.mesh) return null;
-    const uv = pick.getTextureCoordinates();
-    if (!uv) return null;
-    return { u: uv.x, v: uv.y, distance: pick.distance };
+    return ray;
+  }
+
+  /** Cursor position on one specific surface, ignoring its neighbours. */
+  private pickOn(surface: PaintableSurface): { u: number; v: number; distance: number } | null {
+    return this.uvOnSurface(surface, this.cursorRay());
   }
 
   /**
-   * Picks through the real mouse position. Any paintable surface under the
-   * cursor is fair game, not just the one we entered on — walls butt up against
-   * each other and forcing a re-entry at every seam would be miserable.
+   * Cursor position on whichever paintable surface it is over.
+   *
+   * Every candidate is tested by plane intersection and the nearest hit wins,
+   * so following the cursor across a seam moves onto the neighbouring panel —
+   * walls butt up against each other and forcing a re-entry at every seam
+   * would be miserable.
    */
   private pickSurface(entry: PaintableSurface): { u: number; v: number; distance: number } | null {
-    const pick = this.scene.pick(this.input.pointerX, this.input.pointerY, (mesh: AbstractMesh) =>
-      Boolean(mesh.metadata?.paintable),
-    );
-    if (!pick?.hit || !pick.pickedMesh) return null;
-    if (pick.distance > PAINT_RANGE + 1.5) return null;
+    const ray = this.cursorRay();
 
-    const surface = this.surfaces.fromMesh(pick.pickedMesh);
-    if (!surface) return null;
+    let bestSurface: PaintableSurface | null = null;
+    let best: { u: number; v: number; distance: number } | null = null;
 
-    // Following the cursor onto a neighbouring panel switches the active piece.
-    if (surface !== this.active) {
-      this.active?.breakStroke();
-      this.active = surface;
-      this.touched.add(surface);
-      surface.reopen();
-      this.wasSpraying = false;
-      void entry;
+    // The surface we are working on gets first refusal, then its neighbours.
+    const seen = new Set<PaintableSurface>();
+    for (const candidate of [entry, ...this.surfaces.all]) {
+      if (seen.has(candidate)) continue;
+      seen.add(candidate);
+      const hit = this.uvOnSurface(candidate, ray);
+      if (!hit) continue;
+      if (!best || hit.distance < best.distance) {
+        best = hit;
+        bestSurface = candidate;
+      }
     }
 
-    const uv = pick.getTextureCoordinates();
-    if (!uv) return null;
-    return { u: uv.x, v: uv.y, distance: pick.distance };
+    if (!best || !bestSurface) return null;
+
+    if (bestSurface !== this.active) {
+      this.active?.breakStroke();
+      this.active = bestSurface;
+      this.touched.add(bestSurface);
+      bestSurface.reopen();
+      this.wasSpraying = false;
+    }
+    return best;
   }
 
   private startSpraying(): void {

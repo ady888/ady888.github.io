@@ -322,6 +322,20 @@ export class PaintHUD {
           ? "Moving — release Shift to go back to aiming"
           : "WASD aims · Shift+WASD moves · F for a guided piece · hold E to finish",
       }),
+      // Painting is the whole game, so when it is not working the HUD says so
+      // rather than leaving the player guessing at a silent failure.
+      el("div", {
+        style: state.trigger
+          ? state.onSurface
+            ? "color:var(--accent-2)"
+            : "color:var(--danger)"
+          : "color:var(--ink-dim)",
+        text: state.trigger
+          ? state.onSurface
+            ? `Spraying · ${state.sprayedThisSession} marks`
+            : "Trigger held — but the cursor is not on a wall"
+          : "Trigger: hold left mouse (or Space) over the wall",
+      }),
     );
 
     for (const button of this.capSeg.querySelectorAll("button")) {
