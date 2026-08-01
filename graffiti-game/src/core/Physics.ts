@@ -27,11 +27,8 @@ export class PhysicsWorld {
 
   async init(scene: Scene): Promise<boolean> {
     try {
-      const [{ default: HavokPhysics }, wasm] = await Promise.all([
-        import("@babylonjs/havok"),
-        import("@babylonjs/havok/lib/esm/HavokPhysics.wasm?url"),
-      ]);
-      const havok = await HavokPhysics({ locateFile: () => wasm.default });
+      const { loadHavok } = await import("./HavokLoader");
+      const havok = await loadHavok();
       this.plugin = new HavokPlugin(true, havok);
       scene.enablePhysics(new Vector3(0, -9.81, 0), this.plugin);
       return true;

@@ -3,13 +3,14 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Alley Kings — a Babylon.js urban graffiti game vertical slice.",
+  "description": "Alley Kings \u2014 a Babylon.js urban graffiti game vertical slice.",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "build:site": "tsc --noEmit && vite build --outDir ../game --emptyOutDir --sourcemap false",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:standalone": "tsc --noEmit && vite build --config vite.config.standalone.ts"
   },
   "dependencies": {
     "@babylonjs/core": "^9.19.0",
