@@ -32,20 +32,32 @@ abstract class Screen {
 
 export const CONTROL_ROWS: Array<[string, string]> = [
   ["W/A/S/D", "Move"],
+  ["Mouse", "Look"],
   ["Shift", "Run"],
   ["Ctrl", "Crouch (quieter, and lets you paint low)"],
   ["Space", "Jump"],
-  ["E", "Interact / hold to finish a piece"],
-  ["P", "Enter paint mode at a surface"],
+  ["V", "Switch first / third person"],
+  ["P", "Paint the wall you are near (within 5 m)"],
+  ["E", "Pick things up / hold to finish a piece"],
   ["F", "Raise the camera"],
   ["G", "Open your flicks"],
-  ["1-9 / Wheel", "Pick a can"],
+  ["Esc", "Pause"],
+];
+
+/** Paint mode rebinds the movement keys, so it gets its own list. */
+export const PAINT_CONTROL_ROWS: Array<[string, string]> = [
+  ["Mouse", "Drag to spray — the cursor is the can"],
+  ["W/A/S/D", "Aim (swings the view)"],
+  ["Shift+WASD", "Move without leaving paint mode"],
+  ["C / Wheel", "Next colour"],
+  ["1-9", "Pick a can directly"],
   ["Q", "Swap cap (skinny / standard / fat)"],
   ["R", "Shake the can"],
-  ["T", "Stencil mode"],
   ["Z", "Undo last stroke"],
   ["B", "Lay a base coat"],
-  ["Esc", "Pause"],
+  ["T", "Stencil mode ([ ] change, , . rotate)"],
+  ["E", "Hold to finish the piece"],
+  ["P", "Leave paint mode"],
 ];
 
 // ---------------------------------------------------------------------------
@@ -123,7 +135,7 @@ export class MainMenu extends Screen {
             style: "font-size:.78rem;opacity:.65",
             text: `Renderer: ${backend.toUpperCase()} · everything is generated in-browser, no downloads.`,
           }),
-          controlList(CONTROL_ROWS.slice(0, 8)),
+          controlList(CONTROL_ROWS.slice(0, 9)),
         ),
         el(
           "div",
@@ -219,6 +231,8 @@ export class PauseMenu extends Screen {
         ),
         el("h2", { style: "font-size:1.1rem;margin-top:1.6rem", text: "Controls" }),
         controlList(CONTROL_ROWS),
+        el("h2", { style: "font-size:1.1rem;margin-top:1.4rem", text: "Painting" }),
+        controlList(PAINT_CONTROL_ROWS),
       ),
     );
   }

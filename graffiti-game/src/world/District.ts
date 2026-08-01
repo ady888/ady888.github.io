@@ -96,118 +96,15 @@ export function buildDistrict(
   // Risk is the single number that ties a wall to the rest of the systems: it
   // scales fame, how often witnesses glance at you, and mission gating.
 
-  surfaces.push(
-    {
-      id: "wall.tutorial",
-      label: "Brick wall",
-      position: new Vector3(-40, 2.2, 4.94),
-      rotationY: FACE_SOUTH,
-      width: 7,
-      height: 3.6,
-      risk: 0.26,
-    },
-    {
-      id: "wall.dock",
-      label: "Loading bay wall",
-      position: new Vector3(-45, 2.0, -4.94),
-      rotationY: FACE_NORTH,
-      width: 6,
-      height: 3.0,
-      risk: 0.2,
-    },
-    {
-      id: "wall.deadend",
-      label: "Dead-end wall",
-      position: new Vector3(-51.85, 2.3, 0),
-      rotationY: FACE_EAST,
-      width: 6.5,
-      height: 3.6,
-      risk: 0.3,
-    },
-    {
-      id: "shutter.a",
-      label: "Roller shutter",
-      position: new Vector3(-26, 1.75, 4.86),
-      rotationY: FACE_SOUTH,
-      width: 4,
-      height: 3.1,
-      risk: 0.44,
-    },
-    {
-      id: "shutter.b",
-      label: "Workshop shutter",
-      position: new Vector3(-13, 1.6, -4.86),
-      rotationY: FACE_NORTH,
-      width: 3.6,
-      height: 2.8,
-      risk: 0.4,
-    },
-    {
-      id: "dumpster.flank",
-      label: "Skip flank",
-      position: new Vector3(-33, 0.72, 2.62),
-      rotationY: FACE_SOUTH,
-      width: 2.2,
-      height: 1.0,
-      risk: 0.18,
-      texelsPerMetre: 260,
-    },
-    {
-      id: "hoarding",
-      label: "Site hoarding",
-      position: new Vector3(2, 1.55, -4.82),
-      rotationY: FACE_NORTH,
-      width: 5,
-      height: 2.5,
-      risk: 0.52,
-    },
-    {
-      id: "pillar.underpass",
-      label: "Overpass pillar",
-      position: new Vector3(15.1, 1.9, 0),
-      rotationY: FACE_EAST,
-      width: 2.4,
-      height: 3.0,
-      risk: 0.14,
-    },
-    {
-      id: "yard.fireescape",
-      label: "Fire-escape wall",
-      position: new Vector3(-11, 5.1, 15.92),
-      rotationY: FACE_SOUTH,
-      width: 4,
-      height: 2.4,
-      risk: 0.78,
-    },
-    {
-      id: "street.gable",
-      label: "Street gable",
-      position: new Vector3(51.85, 3.2, 6),
-      rotationY: FACE_WEST,
-      width: 7,
-      height: 4.4,
-      risk: 0.92,
-    },
-    {
-      id: "street.shutter",
-      label: "Shopfront shutter",
-      position: new Vector3(51.85, 1.7, -8),
-      rotationY: FACE_WEST,
-      width: 4.5,
-      height: 3.0,
-      risk: 0.84,
-    },
-    {
-      id: "van.flank",
-      label: "Delivery van",
-      position: new Vector3(43.42, 1.45, -2.5),
-      rotationY: FACE_WEST,
-      width: 3.6,
-      height: 1.5,
-      risk: 0.66,
-      texelsPerMetre: 240,
-    },
-  );
+  // Named spots: hand-placed, with a deliberate risk rating each. These are the
+  // ones the objectives and the HUD talk about by name.
+  const named = namedSpots();
+  // Everything else in the district is paintable too: the generator tiles
+  // panels across every facade that borders somewhere you can stand. Panels are
+  // invisible and have no canvas until paint actually lands on them, so several
+  // hundred of them cost almost nothing until they are used. It is handed the
+  // named spots explicitly so it can leave room around them.
+  surfaces.push(...named, ...generatePanels(named));
 
   // ---- routes and points of interest ---------------------------------------
 
@@ -790,4 +687,255 @@ function addPriorTags(
   plane.material = cloned;
   plane.isPickable = false;
   plane.receiveShadows = false;
+}
+
+
+// ---------------------------------------------------------------------------
+// Paintable surface generation
+// ---------------------------------------------------------------------------
+
+/** The hand-authored spots, which carry the labels the missions refer to. */
+function namedSpots(): SurfaceDef[] {
+  return [
+    {
+      id: "wall.tutorial",
+      label: "Brick wall",
+      position: new Vector3(-40, 2.2, 4.94),
+      rotationY: FACE_SOUTH,
+      width: 7,
+      height: 3.6,
+      risk: 0.26,
+    },
+    {
+      id: "wall.dock",
+      label: "Loading bay wall",
+      position: new Vector3(-45, 2.0, -4.94),
+      rotationY: FACE_NORTH,
+      width: 6,
+      height: 3.0,
+      risk: 0.2,
+    },
+    {
+      id: "wall.deadend",
+      label: "Dead-end wall",
+      position: new Vector3(-51.85, 2.3, 0),
+      rotationY: FACE_EAST,
+      width: 6.5,
+      height: 3.6,
+      risk: 0.3,
+    },
+    {
+      id: "shutter.a",
+      label: "Roller shutter",
+      position: new Vector3(-26, 1.75, 4.86),
+      rotationY: FACE_SOUTH,
+      width: 4,
+      height: 3.1,
+      risk: 0.44,
+    },
+    {
+      id: "shutter.b",
+      label: "Workshop shutter",
+      position: new Vector3(-13, 1.6, -4.86),
+      rotationY: FACE_NORTH,
+      width: 3.6,
+      height: 2.8,
+      risk: 0.4,
+    },
+    {
+      id: "dumpster.flank",
+      label: "Skip flank",
+      position: new Vector3(-33, 0.72, 2.62),
+      rotationY: FACE_SOUTH,
+      width: 2.2,
+      height: 1.0,
+      risk: 0.18,
+      texelsPerMetre: 260,
+    },
+    {
+      id: "hoarding",
+      label: "Site hoarding",
+      position: new Vector3(2, 1.55, -4.82),
+      rotationY: FACE_NORTH,
+      width: 5,
+      height: 2.5,
+      risk: 0.52,
+    },
+    {
+      id: "pillar.underpass",
+      label: "Overpass pillar",
+      position: new Vector3(15.1, 1.9, 0),
+      rotationY: FACE_EAST,
+      width: 2.4,
+      height: 3.0,
+      risk: 0.14,
+    },
+    {
+      id: "yard.fireescape",
+      label: "Fire-escape wall",
+      position: new Vector3(-11, 5.1, 15.92),
+      rotationY: FACE_SOUTH,
+      width: 4,
+      height: 2.4,
+      risk: 0.78,
+    },
+    {
+      id: "street.gable",
+      label: "Street gable",
+      position: new Vector3(51.85, 3.2, 6),
+      rotationY: FACE_WEST,
+      width: 7,
+      height: 4.4,
+      risk: 0.92,
+    },
+    {
+      id: "street.shutter",
+      label: "Shopfront shutter",
+      position: new Vector3(51.85, 1.7, -8),
+      rotationY: FACE_WEST,
+      width: 4.5,
+      height: 3.0,
+      risk: 0.84,
+    },
+    {
+      id: "van.flank",
+      label: "Delivery van",
+      position: new Vector3(43.42, 1.45, -2.5),
+      rotationY: FACE_WEST,
+      width: 3.6,
+      height: 1.5,
+      risk: 0.66,
+      texelsPerMetre: 240,
+    },
+  ];
+}
+
+/** A run of wall the generator should tile paintable panels across. */
+interface PanelRun {
+  label: string;
+  /** Fixed coordinate of the facade plane. */
+  plane: number;
+  /** Whether the run extends along X (facade faces +/-Z) or along Z. */
+  axis: "x" | "z";
+  from: number;
+  to: number;
+  facing: number;
+  /** Centre height and panel height, in metres. */
+  centreY: number;
+  height: number;
+  /** Base exposure; the generator nudges it by position. */
+  risk: number;
+}
+
+const PANEL_WIDTH = 4.5;
+/** Gap left around a named spot so the two planes never overlap and z-fight. */
+const NAMED_SPOT_MARGIN = 0.4;
+
+/**
+ * Tiles paintable panels along every facade in the district.
+ *
+ * Two decisions worth knowing:
+ *
+ *  - Panels stop where a named spot already is, so the two never overlap and
+ *    fight over the same pixels.
+ *  - Ground-level only. Nothing above about 5 m is reachable without the fire
+ *    escape, and a wall you cannot stand at is not a spot.
+ */
+function generatePanels(existing: SurfaceDef[]): SurfaceDef[] {
+  const runs: PanelRun[] = [
+    // North side of the alley.
+    { label: "Alley wall", plane: 4.94, axis: "x", from: -52, to: 34, facing: FACE_SOUTH, centreY: 2.1, height: 3.6, risk: 0.3 },
+    // South side of the alley.
+    { label: "Alley wall", plane: -4.94, axis: "x", from: -54, to: 34, facing: FACE_NORTH, centreY: 2.1, height: 3.6, risk: 0.3 },
+    // The street frontage: wide open, well lit, and worth the most.
+    { label: "Street frontage", plane: 51.85, axis: "z", from: -34, to: 34, facing: FACE_WEST, centreY: 2.4, height: 4.2, risk: 0.86 },
+    // Side yard.
+    { label: "Yard wall", plane: 15.92, axis: "x", from: -16, to: -6, facing: FACE_SOUTH, centreY: 2.1, height: 3.6, risk: 0.42 },
+    { label: "Yard wall", plane: -5.98, axis: "z", from: 6, to: 15, facing: FACE_EAST, centreY: 2.1, height: 3.6, risk: 0.4 },
+    { label: "Yard wall", plane: -16.02, axis: "z", from: 6, to: 15, facing: FACE_WEST, centreY: 2.1, height: 3.6, risk: 0.4 },
+    // Dead end.
+    { label: "Dead-end wall", plane: -51.9, axis: "z", from: -4, to: 4, facing: FACE_EAST, centreY: 2.2, height: 3.6, risk: 0.28 },
+    // Both faces of both overpass pillars — the safest spots in the district.
+    { label: "Overpass pillar", plane: 14.68, axis: "z", from: -4.5, to: -1.9, facing: FACE_WEST, centreY: 1.9, height: 3.0, risk: 0.14 },
+    { label: "Overpass pillar", plane: 17.32, axis: "z", from: -4.5, to: -1.9, facing: FACE_EAST, centreY: 1.9, height: 3.0, risk: 0.14 },
+    { label: "Overpass pillar", plane: 17.32, axis: "z", from: 1.9, to: 4.5, facing: FACE_EAST, centreY: 1.9, height: 3.0, risk: 0.14 },
+    { label: "Overpass pillar", plane: 14.68, axis: "z", from: 1.9, to: 4.5, facing: FACE_WEST, centreY: 1.9, height: 3.0, risk: 0.14 },
+    // The loading dock's back wall, reachable from the raised slab.
+    { label: "Loading bay wall", plane: -8.02, axis: "x", from: -49, to: -41, facing: FACE_NORTH, centreY: 2.6, height: 3.0, risk: 0.22 },
+  ];
+
+  const out: SurfaceDef[] = [];
+  for (const run of runs) {
+    const span = run.to - run.from;
+    const count = Math.max(1, Math.floor(span / PANEL_WIDTH));
+    const width = span / count;
+
+    for (let i = 0; i < count; i += 1) {
+      const centre = run.from + width * (i + 0.5);
+      const position =
+        run.axis === "x"
+          ? new Vector3(centre, run.centreY, run.plane)
+          : new Vector3(run.plane, run.centreY, centre);
+
+      if (overlapsNamedSpot(position, width, run, existing)) continue;
+
+      // Exposure rises the closer a wall is to the open street to the east.
+      const openness = clamp01((position.x + 58) / 110);
+      const covered = Math.abs(position.x - 16) < 6 && Math.abs(position.z) < 12;
+      const risk = clamp01(run.risk * 0.65 + openness * 0.4 - (covered ? 0.3 : 0));
+
+      out.push({
+        id: `panel.${run.axis}.${Math.round(centre * 10)}.${Math.round(run.plane * 10)}`,
+        label: run.label,
+        position,
+        rotationY: run.facing,
+        width: width - 0.08,
+        height: run.height,
+        risk: Math.round(risk * 100) / 100,
+        // Generic panels are a touch lower resolution: there are a lot of them.
+        texelsPerMetre: 150,
+      });
+    }
+  }
+  return out;
+}
+
+/**
+ * True when a generated panel would sit on top of a hand-placed spot.
+ *
+ * Compared as extents along the run's own axis rather than by centre distance:
+ * a radius test throws away perfectly good wall either side of a named spot,
+ * which is how the first pass ended up with far fewer panels than walls.
+ */
+function overlapsNamedSpot(
+  position: Vector3,
+  width: number,
+  run: PanelRun,
+  existing: SurfaceDef[],
+): boolean {
+  const along = run.axis === "x" ? position.x : position.z;
+  const min = along - width / 2 - NAMED_SPOT_MARGIN;
+  const max = along + width / 2 + NAMED_SPOT_MARGIN;
+
+  for (const spot of existing) {
+    // Only spots on the same facade plane, facing the same way, can collide.
+    const spotPlane = run.axis === "x" ? spot.position.z : spot.position.x;
+    if (Math.abs(spotPlane - run.plane) > 0.6) continue;
+    if (Math.abs(normaliseAngle(spot.rotationY - run.facing)) > 0.1) continue;
+
+    const spotAlong = run.axis === "x" ? spot.position.x : spot.position.z;
+    if (spotAlong + spot.width / 2 > min && spotAlong - spot.width / 2 < max) return true;
+  }
+  return false;
+}
+
+function normaliseAngle(angle: number): number {
+  let a = angle;
+  while (a > Math.PI) a -= Math.PI * 2;
+  while (a < -Math.PI) a += Math.PI * 2;
+  return a;
+}
+
+function clamp01(value: number): number {
+  return value < 0 ? 0 : value > 1 ? 1 : value;
 }

@@ -288,9 +288,13 @@ export class PaintHUD {
       el("div", {
         text: state.stencilMode
           ? `Stencil: ${state.stencilName} — [ ] to change, , . to rotate`
-          : "Hold LMB to spray · R to shake · Z undo · T stencil",
+          : "Drag with the mouse to spray · C colour · Q cap · R shake · Z undo",
       }),
-      el("div", { text: "Hold E to step back and call it done" }),
+      el("div", {
+        text: state.repositioning
+          ? "Moving — release Shift to go back to aiming"
+          : "WASD aims · hold Shift + WASD to move · hold E to finish",
+      }),
     );
 
     for (const button of this.capSeg.querySelectorAll("button")) {

@@ -725,6 +725,12 @@ button.ghost {
   background: linear-gradient(90deg, var(--accent), var(--accent-2));
 }
 
+/* Paint mode keeps a real cursor: the ring below tracks it, and a crosshair
+   makes it clear the pointer is now a tool rather than a camera. */
+#render-canvas.paint-mode {
+  cursor: crosshair;
+}
+
 .spray-cursor {
   position: absolute;
   border: 1px solid rgba(255, 255, 255, 0.7);

@@ -116,7 +116,10 @@ export class NPCManager {
       nearestOfficer = Math.min(nearestOfficer, officer.distanceTo(senses.playerPosition));
       if (officer.state === "chasing" || officer.state === "grabbing") {
         seenByPolice = true;
-        this.heat.sighted(deltaSeconds);
+        // Being seen only escalates once there is already something to answer
+        // for; officers who happen to look at you while you are walking do not
+        // build heat of their own accord.
+        if (this.heat.isWanted || senses.playerPainting) this.heat.sighted(deltaSeconds);
         this.reportedPosition = senses.playerPosition.clone();
       }
       if (officer.caughtPlayer) busted = true;

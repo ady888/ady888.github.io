@@ -122,18 +122,19 @@ export class Pedestrian extends Actor {
       return;
     }
 
-    let rate = 0;
-    if (sees) {
+    // Walking down an alley is not a crime. Suspicion only builds while the
+    // player is actually spraying a wall — a witness who merely sees you go
+    // past has nothing to report, so nothing here should tick up for it.
+    let rate = -0.28;
+    if (sees && senses.playerPainting) {
       this.lastSeenPlayer = senses.playerPosition.clone();
-      // Closer, better lit, and mid-spray all make you far more obvious.
+      // Closer and more exposed spots make you far more obvious.
       const proximity = Scalar.Clamp(1 - distance / VIEW_RANGE, 0.1, 1);
-      rate = 0.16 + proximity * 0.3;
-      if (senses.playerPainting) rate += 0.35 + senses.paintingRisk * 0.55;
-      if (senses.playerCrouched) rate *= 0.55;
-    } else if (hears) {
-      rate = 0.1 * senses.playerNoise;
-    } else {
-      rate = -0.28;
+      rate = 0.3 + proximity * 0.25 + senses.paintingRisk * 0.55;
+      if (senses.playerCrouched) rate *= 0.6;
+    } else if (hears && senses.playerPainting) {
+      // The hiss of a can carries further than footsteps do.
+      rate = 0.12 * Math.max(senses.playerNoise, 0.5);
     }
 
     this.suspicion = Scalar.Clamp(this.suspicion + rate * deltaSeconds, 0, 1);

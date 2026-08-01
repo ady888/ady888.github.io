@@ -61,9 +61,11 @@ export class PaintableSurface {
   readonly worldWidth: number;
   readonly worldHeight: number;
 
-  private readonly texture: DynamicTexture;
-  private readonly ctx: CanvasRenderingContext2D;
-  private readonly material: StandardMaterial;
+  // Allocated on first paint: the district has hundreds of paintable panels and
+  // giving every one of them a megabyte of canvas up front would be absurd.
+  private texture: DynamicTexture | null = null;
+  private ctxOrNull: CanvasRenderingContext2D | null = null;
+  private material: StandardMaterial | null = null;
   readonly texWidth: number;
   readonly texHeight: number;
 
@@ -109,34 +111,14 @@ export class PaintableSurface {
     this.texWidth = Math.max(64, texWidth);
     this.texHeight = Math.max(64, texHeight);
 
-    this.texture = new DynamicTexture(
-      `paint.${def.id}`,
-      { width: this.texWidth, height: this.texHeight },
-      scene,
-      true,
-    );
-    this.texture.hasAlpha = true;
-    this.texture.anisotropicFilteringLevel = 4;
-    this.ctx = this.texture.getContext() as unknown as CanvasRenderingContext2D;
-    this.ctx.clearRect(0, 0, this.texWidth, this.texHeight);
-    this.texture.update();
-
-    this.material = new StandardMaterial(`paintMat.${def.id}`, scene);
-    this.material.diffuseTexture = this.texture;
-    this.material.useAlphaFromDiffuseTexture = true;
-    this.material.specularColor = new Color3(0.09, 0.09, 0.1);
-    this.material.specularPower = 40;
-    // Fresh paint has a faint sheen even in the dark; keeps it readable at night.
-    this.material.emissiveColor = new Color3(0.06, 0.06, 0.07);
-    this.material.backFaceCulling = true;
-    this.material.zOffset = -2;
-
     this.mesh = MeshBuilder.CreatePlane(
       `paintPlane.${def.id}`,
       { width: def.width, height: def.height, sideOrientation: Mesh.FRONTSIDE },
       scene,
     );
-    this.mesh.material = this.material;
+    // Invisible until painted, but always pickable — that is what lets the
+    // cursor find a blank wall without the wall costing anything to exist.
+    this.mesh.isVisible = false;
     this.mesh.position = def.position.clone();
     this.mesh.rotation.y = def.rotationY;
     if (def.rotationX) this.mesh.rotation.x = def.rotationX;
@@ -149,6 +131,44 @@ export class PaintableSurface {
     this.gridH = Math.max(6, Math.round(GRID_CELLS_ACROSS / Math.max(0.25, aspect)));
     this.coverGrid = new Uint8Array(this.gridW * this.gridH);
     this.wetGrid = new Float32Array(this.gridW * this.gridH);
+  }
+
+  /** Allocates the canvas and material the first time paint lands here. */
+  private ensureCanvas(): CanvasRenderingContext2D {
+    if (this.ctxOrNull) return this.ctxOrNull;
+
+    const scene = this.mesh.getScene();
+    this.texture = new DynamicTexture(
+      `paint.${this.id}`,
+      { width: this.texWidth, height: this.texHeight },
+      scene,
+      true,
+    );
+    this.texture.hasAlpha = true;
+    this.texture.anisotropicFilteringLevel = 4;
+    const ctx = this.texture.getContext() as unknown as CanvasRenderingContext2D;
+    ctx.clearRect(0, 0, this.texWidth, this.texHeight);
+    this.texture.update();
+
+    this.material = new StandardMaterial(`paintMat.${this.id}`, scene);
+    this.material.diffuseTexture = this.texture;
+    this.material.useAlphaFromDiffuseTexture = true;
+    this.material.specularColor = new Color3(0.09, 0.09, 0.1);
+    this.material.specularPower = 40;
+    // Fresh paint has a faint sheen even in the dark; keeps it readable at night.
+    this.material.emissiveColor = new Color3(0.06, 0.06, 0.07);
+    this.material.backFaceCulling = true;
+    this.material.zOffset = -2;
+
+    this.mesh.material = this.material;
+    this.mesh.isVisible = true;
+    this.ctxOrNull = ctx;
+    return ctx;
+  }
+
+  /** Canvas accessor for the drawing helpers, allocating on demand. */
+  private get ctx(): CanvasRenderingContext2D {
+    return this.ensureCanvas();
   }
 
   // ---------------------------------------------------------------- geometry
@@ -187,7 +207,7 @@ export class PaintableSurface {
   ): void {
     const x = u * this.texWidth;
     const y = (1 - v) * this.texHeight;
-    const ctx = this.ctx;
+    const ctx = this.ensureCanvas();
 
     if (continuous && this.lastUV) {
       const px = this.lastUV.u * this.texWidth;
@@ -245,6 +265,7 @@ export class PaintableSurface {
   stamp(stencilId: string, u: number, v: number, sizePx: number, rotation: number, colour: string): boolean {
     const stencil = stencilById(stencilId);
     if (!stencil) return false;
+    this.ensureCanvas();
     const width = sizePx * stencil.aspect;
     const height = sizePx;
     const x = u * this.texWidth;
@@ -268,6 +289,7 @@ export class PaintableSurface {
 
   /** Grey wash used both by the buff truck and by the player's own base coat. */
   buff(colour = "#6f6f6c", alpha = 0.92): void {
+    this.ensureCanvas();
     this.ctx.save();
     this.ctx.globalAlpha = alpha;
     this.ctx.fillStyle = colour;
@@ -307,6 +329,7 @@ export class PaintableSurface {
   /** Advances drips and pushes the canvas to the GPU at most once a frame. */
   update(deltaSeconds: number, isPainting: boolean): void {
     if (isPainting) this.timeSpentMs += deltaSeconds * 1000;
+    if (!this.ctxOrNull) return;
 
     if (this.drips.length > 0) {
       const ctx = this.ctx;
@@ -348,7 +371,7 @@ export class PaintableSurface {
     }
 
     if (this.dirty) {
-      this.texture.update();
+      this.texture?.update();
       this.dirty = false;
     }
   }
@@ -419,14 +442,23 @@ export class PaintableSurface {
 
   dispose(): void {
     this.mesh.dispose(false, true);
-    this.texture.dispose();
-    this.material.dispose();
+    this.texture?.dispose();
+    this.material?.dispose();
   }
 
   // ----------------------------------------------------------------- private
 
   private rebuild(ops: StrokeOp[]): void {
-    this.ctx.clearRect(0, 0, this.texWidth, this.texHeight);
+    if (ops.length === 0 && !this.ctxOrNull) {
+      // Nothing drawn and nothing allocated: there is no canvas to reset.
+      this.ops.length = 0;
+      this.coverGrid.fill(0);
+      this.wetGrid.fill(0);
+      this.coveredCells = 0;
+      this.drips.length = 0;
+      return;
+    }
+    this.ensureCanvas().clearRect(0, 0, this.texWidth, this.texHeight);
     this.coverGrid.fill(0);
     this.wetGrid.fill(0);
     this.coveredCells = 0;
@@ -468,7 +500,7 @@ export class PaintableSurface {
       this.ops.push(op);
     }
 
-    this.texture.update();
+    this.texture?.update();
     this.dirty = false;
     this.lastUV = null;
   }

@@ -168,6 +168,27 @@ export class Actor {
     if (direction.lengthSquared() > 1e-5) this.faceDirection(direction.normalize(), deltaSeconds, 6);
   }
 
+  /**
+   * Drives the walk cycle from a speed rather than from a movement call, for
+   * actors (like the player) whose position is owned by something else.
+   */
+  animateLocomotion(deltaSeconds: number, speed: number): void {
+    if (speed > 0.35) this.animateWalk(deltaSeconds, speed);
+    else this.animateIdle(deltaSeconds);
+  }
+
+  /** Faces a yaw directly, for actors steered by a camera rather than a target. */
+  setFacing(yaw: number, deltaSeconds: number, rate = 10): void {
+    this.faceDirection(new Vector3(Math.sin(yaw), 0, Math.cos(yaw)), deltaSeconds, rate);
+  }
+
+  /** Raises the can arm while painting. */
+  setPaintPose(active: boolean, deltaSeconds: number): void {
+    const target = active ? -1.15 : 0;
+    const blend = Math.min(1, deltaSeconds * 9);
+    this.arms[1].rotation.x += (target - this.arms[1].rotation.x) * blend;
+  }
+
   /** Idle sway, so a stationary NPC does not look like a mannequin. */
   animateIdle(deltaSeconds: number): void {
     this.walkPhase += deltaSeconds * 1.6;

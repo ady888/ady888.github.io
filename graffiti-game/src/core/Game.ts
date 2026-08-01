@@ -155,7 +155,9 @@ export class Game {
 
     this.input.attach();
     this.input.onPointerLockLost = () => {
-      if (this.state === GameState.Explore || this.state === GameState.Painting || this.state === GameState.Photo) {
+      // Paint mode gives the cursor back on purpose; only treat a lost lock as
+      // "the player alt-tabbed away" in the states that asked for it.
+      if (this.state === GameState.Explore || this.state === GameState.Photo) {
         this.openPause();
       }
     };
@@ -222,6 +224,14 @@ export class Game {
 
     this.updateInteractionPrompt();
 
+    if (this.input.wasKeyPressed("KeyV")) {
+      const first = this.player.toggleViewMode();
+      this.bus.emit("toast", {
+        text: first ? "First-person camera" : "Third-person camera",
+        kind: "info",
+        ttl: 1600,
+      });
+    }
     if (this.input.wasPressed("paint")) this.tryEnterPaint();
     if (this.input.wasPressed("photo")) this.enterPhoto();
     if (this.input.wasPressed("gallery")) void this.openGallery();
@@ -229,8 +239,9 @@ export class Game {
   }
 
   private tickPainting(dt: number): void {
-    // Look is handed to the spray cursor, so no updateLook here.
-    this.player.update(dt);
+    // PaintMode drives the player itself: WASD aims, Shift+WASD moves, and the
+    // mouse is the brush. Calling player.update() here as well would let WASD
+    // walk and aim at the same time.
     this.paint.update(dt);
 
     if (this.paint.finishRequested) {
@@ -344,7 +355,7 @@ export class Game {
     const surface = this.paint.candidate();
     if (!surface) {
       this.bus.emit("toast", {
-        text: `Nothing paintable within ${PAINT_RANGE.toFixed(1)} m — get closer to a wall.`,
+        text: `Move within ${PAINT_RANGE.toFixed(0)} m of a wall to paint it.`,
         kind: "warn",
         ttl: 2000,
       });
@@ -360,8 +371,7 @@ export class Game {
   }
 
   private finishPiece(): void {
-    const surface = this.paint.active;
-    if (!surface || !surface.hasPaint) {
+    if (!this.paint.hasPaintThisSession) {
       this.paint.exit();
       this.setState(GameState.Explore);
       this.bus.emit("toast", { text: "Nothing on the wall yet.", kind: "warn", ttl: 1800 });
@@ -373,12 +383,17 @@ export class Game {
   }
 
   private enterPhoto(): void {
+    this.photoCameraModeBefore = this.player.firstPerson;
+    this.player.firstPerson = true;
     this.photo.enter();
     this.setState(GameState.Photo);
     this.ui.photoHud.update(this.photo.hudState(this.npcs.heat.stars));
   }
 
+  private photoCameraModeBefore = false;
+
   private exitPhoto(): void {
+    this.player.firstPerson = this.photoCameraModeBefore;
     this.photo.exit();
     this.setState(GameState.Explore);
   }
@@ -456,7 +471,10 @@ export class Game {
 
     if (playing) {
       this.ui.hideAllScreens();
-      this.input.requestPointerLock();
+      // Paint mode deliberately runs with a free cursor, so it is the one
+      // playable state that does not take pointer lock.
+      if (next === GameState.Painting) this.input.releasePointerLock();
+      else this.input.requestPointerLock();
     } else {
       this.input.releasePointerLock();
       this.audio.stopSpray();
