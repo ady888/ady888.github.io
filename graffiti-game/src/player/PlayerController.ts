@@ -87,6 +87,15 @@ export class PlayerController {
   firstPerson = false;
   /** Raises the can arm on the avatar. */
   paintPose = false;
+  /** World point the can hand should reach towards, or null for a neutral pose. */
+  private paintTarget: Vector3 | null = null;
+  /**
+   * When set, the third-person camera frames this point instead of looking
+   * straight ahead — used by guided painting to keep the player and the live
+   * part of the artwork both on screen.
+   */
+  private framingFocus: Vector3 | null = null;
+  private framedPosition: Vector3 | null = null;
 
   constructor(
     private readonly scene: Scene,
@@ -177,6 +186,15 @@ export class PlayerController {
     this.updateCamera(1);
   }
 
+  setPaintTarget(target: Vector3 | null): void {
+    this.paintTarget = target;
+  }
+
+  setFramingFocus(focus: Vector3 | null): void {
+    this.framingFocus = focus;
+    if (!focus) this.framedPosition = null;
+  }
+
   toggleViewMode(): boolean {
     this.firstPerson = !this.firstPerson;
     return this.firstPerson;
@@ -189,6 +207,20 @@ export class PlayerController {
     const sensitivity = 0.0022 * this.settings.mouseSensitivity * sensitivityScale;
     this.yaw += look.x * sensitivity;
     this.pitch += look.y * sensitivity * (this.settings.invertY ? -1 : 1);
+    this.clampPitch();
+  }
+
+  /** Turns towards a yaw over time. Used when the game places the player. */
+  faceTowards(targetYaw: number, deltaSeconds: number, rate = 5): void {
+    let delta = targetYaw - this.yaw;
+    while (delta > Math.PI) delta -= Math.PI * 2;
+    while (delta < -Math.PI) delta += Math.PI * 2;
+    this.yaw += delta * Math.min(1, deltaSeconds * rate);
+  }
+
+  /** Pitches towards a target, for framing an artwork vertically. */
+  pitchTowards(targetPitch: number, deltaSeconds: number, rate = 5): void {
+    this.pitch += (targetPitch - this.pitch) * Math.min(1, deltaSeconds * rate);
     this.clampPitch();
   }
 
@@ -378,7 +410,10 @@ export class PlayerController {
     // The writer faces where you are aiming, so strafing reads as sidestepping.
     this.avatar.setFacing(this.yaw, dt);
     this.avatar.animateLocomotion(dt, horizontalSpeed);
-    this.avatar.setPaintPose(this.paintPose, dt);
+    // Only one of these may drive the can arm: the reach wins when guided
+    // painting is feeding it a target, otherwise it falls back to the pose.
+    if (this.paintTarget) this.avatar.reachTowards(this.paintTarget, dt);
+    else this.avatar.setPaintPose(this.paintPose, dt);
     this.avatar.setVisible(!this.firstPerson);
   }
 
@@ -404,6 +439,11 @@ export class PlayerController {
       return;
     }
 
+    if (this.framingFocus) {
+      this.updateFramingCamera(dt);
+      return;
+    }
+
     // Over-the-shoulder rather than straight behind the head: the writer sits
     // to one side and the alley ahead stays readable.
     const right = new Vector3(Math.cos(this.yaw), 0, -Math.sin(this.yaw));
@@ -416,6 +456,45 @@ export class PlayerController {
     this.camera.position = Vector3.Lerp(this.camera.position, safe, Math.min(1, dt * 12));
     this.camera.rotation.z = 0;
     this.camera.setTarget(focus.add(look.scale(LOOK_AHEAD)));
+  }
+
+  /**
+   * Guided-painting camera.
+   *
+   * Sits off to the side of the line between the player and the part of the
+   * artwork being painted, so both stay in frame, and pans smoothly as the
+   * active section moves. Everything is lerped — no cuts, no snapping — and it
+   * still runs through the same collision resolve so it cannot end up inside
+   * the wall it is looking at.
+   */
+  private updateFramingCamera(dt: number): void {
+    const focus = this.framingFocus;
+    if (!focus) return;
+
+    const player = this.body.position.add(new Vector3(0, SHOULDER_HEIGHT, 0));
+    // Look from behind and to the side of the writer, angled at the work.
+    const toWork = focus.subtract(player);
+    toWork.y = 0;
+    const distance = Math.max(1.2, toWork.length());
+    if (toWork.lengthSquared() > 1e-5) toWork.normalize();
+    const side = new Vector3(-toWork.z, 0, toWork.x);
+
+    const desired = player
+      .subtract(toWork.scale(distance * 0.85 + 2.6))
+      .add(side.scale(1.9))
+      .add(new Vector3(0, 1.15, 0));
+    desired.y = Math.max(0.6, desired.y);
+
+    const target = Vector3.Lerp(player, focus, 0.55);
+    const safe = this.resolveCameraCollision(target, desired);
+
+    // Slow lerp: the pan should read as deliberate camerawork, not a jerk.
+    this.framedPosition = this.framedPosition
+      ? Vector3.Lerp(this.framedPosition, safe, Math.min(1, dt * 3.2))
+      : safe;
+    this.camera.position = this.framedPosition.clone();
+    this.camera.rotation.z = 0;
+    this.camera.setTarget(target);
   }
 
   /** Pulls the third-person camera in front of anything it would clip through. */

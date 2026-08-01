@@ -13,6 +13,9 @@ import type { PieceScore } from "./PaintScoring";
 import { PaintableSurface } from "./PaintableSurface";
 import type { SurfaceManager } from "./SurfaceManager";
 import { STENCILS } from "./Stencils";
+import { GUIDED_ARTWORKS } from "./GuidedArtworks";
+import { GuidedSession, type GuidedStatus } from "./GuidedPainting";
+import { colourById } from "./Palette";
 
 /** Reach: you have to be at the wall, but not pressed against it. */
 export const PAINT_RANGE = 5;
@@ -43,6 +46,7 @@ export interface PaintHudState {
   paintLeft: number;
   drips: number;
   repositioning: boolean;
+  guided: GuidedStatus | null;
 }
 
 /**
@@ -78,6 +82,9 @@ export class PaintMode {
   private cameraModeBeforePaint = false;
   /** Every panel touched in this session — a piece can span several. */
   private readonly touched = new Set<PaintableSurface>();
+  /** Non-null while a guided artwork is being followed. */
+  private guided: GuidedSession | null = null;
+  private guidedIndex = 0;
 
   constructor(
     private readonly scene: Scene,
@@ -101,6 +108,37 @@ export class PaintMode {
   /** True while the trigger is actually laying paint down. */
   get isSpraying(): boolean {
     return this.spraying;
+  }
+
+  get guidedSession(): GuidedSession | null {
+    return this.guided;
+  }
+
+  /**
+   * Starts (or cancels) a guided artwork on the active surface.
+   *
+   * Guided mode goes third person: the point is to watch the writer work the
+   * line, which you cannot do from behind their eyes.
+   */
+  toggleGuided(): string {
+    if (this.guided) {
+      this.guided.dispose();
+      this.guided = null;
+      this.player.firstPerson = true;
+      this.player.setWideView(true, PAINT_FOV);
+      return "Freehand";
+    }
+    const surface = this.active;
+    if (!surface) return "Nothing to paint";
+
+    const artwork = GUIDED_ARTWORKS[this.guidedIndex % GUIDED_ARTWORKS.length];
+    this.guidedIndex += 1;
+    this.guided = new GuidedSession(this.scene, this.player, artwork, surface);
+    this.touched.add(surface);
+    // Third person, normal FOV: framing is handled by the session.
+    this.player.firstPerson = false;
+    this.player.setWideView(false, 0);
+    return artwork.name;
   }
 
   /** The surface the player could start painting right now, if any. */
@@ -177,6 +215,10 @@ export class PaintMode {
 
   private restorePlayer(): void {
     this.stopSpraying();
+    this.guided?.dispose();
+    this.guided = null;
+    this.player.setPaintTarget(null);
+    this.player.setFramingFocus(null);
     this.scene.getEngine().getRenderingCanvas()?.classList.remove("paint-mode");
     this.player.firstPerson = this.cameraModeBeforePaint;
     this.player.paintPose = false;
@@ -189,8 +231,14 @@ export class PaintMode {
     const surface = this.active;
     if (!surface) return;
 
-    this.updateAimAndMovement(deltaSeconds);
     this.handleHotkeys();
+
+    if (this.guided) {
+      this.updateGuided(deltaSeconds, surface);
+      return;
+    }
+
+    this.updateAimAndMovement(deltaSeconds);
 
     const can = this.inventory.current;
     const cap = this.inventory.capProfile;
@@ -269,6 +317,73 @@ export class PaintMode {
   }
 
   /**
+   * Guided painting tick.
+   *
+   * The session owns everything: it walks the player into place, decides how
+   * far the guide has advanced, and hands back the corrected point to paint.
+   * All this does is supply the inputs and apply the paint it asks for.
+   */
+  private updateGuided(deltaSeconds: number, surface: PaintableSurface): void {
+    const guided = this.guided;
+    if (!guided) return;
+
+    const can = this.inventory.current;
+    const hasPaint = Boolean(can && can.amount > 0);
+    const wantsSpray = this.input.primaryDown && hasPaint && !guided.isRepositioning;
+
+    if (wantsSpray) this.startSpraying();
+    else this.stopSpraying();
+
+    // Guided painting stays locked to its own surface: following the cursor onto
+    // a neighbour mid-artwork would strand the guide on the wrong wall.
+    const hit = wantsSpray ? this.pickOn(guided.surface) : null;
+    this.onSurface = hit !== null;
+    void surface;
+
+    guided.update(
+      deltaSeconds,
+      wantsSpray,
+      hit ? { u: hit.u, v: hit.v } : null,
+      (from, to, colourId, weight) => {
+        const target = guided.surface;
+        const cap = this.inventory.capProfile;
+        const radiusPx =
+          BASE_WORLD_RADIUS * cap.radius * 1.9 * weight * (target.texWidth / target.worldWidth);
+        this.lastRadius = radiusPx;
+        const colour = this.inventory.canSpray()
+          ? this.inventory.currentColour.hex
+          : colourById(colourId).hex;
+        const alpha = Scalar.Clamp(deltaSeconds * 11 * cap.flow, 0.02, 0.9);
+
+        // Draw the leading edge first so a slow frame still joins up, then the
+        // segment itself; `from === null` is the post-pause case and must not
+        // connect back to wherever the last stroke ended.
+        if (from) {
+          target.spray(from.u, from.v, radiusPx, colour, alpha * 0.6, cap.scatter * 0.5, false);
+          target.spray(to.u, to.v, radiusPx, colour, alpha, cap.scatter * 0.6, true);
+        } else {
+          target.spray(to.u, to.v, radiusPx, colour, alpha, cap.scatter * 0.6, false);
+        }
+        this.inventory.consume(deltaSeconds);
+        this.touched.add(target);
+        this.bus.emit("paint:strokeTick", { surfaceId: target.id, coverage: target.coverage });
+      },
+    );
+
+    // The can hand tracks the live guide head, but only while actually spraying.
+    this.player.paintPose = guided.phase === "painting";
+    this.player.setPaintTarget(guided.phase === "painting" ? guided.headWorld : null);
+    this.player.setFramingFocus(guided.isComplete ? null : guided.cameraFocus());
+
+    if (guided.isComplete && this.input.primaryPressed) {
+      this.bus.emit("toast", { text: `${guided.artwork.name} finished`, kind: "good", ttl: 2600 });
+    }
+
+    if (this.input.isDown("interact")) this.finishHeld += deltaSeconds;
+    else this.finishHeld = 0;
+  }
+
+  /**
    * WASD aims by default; holding Shift turns the same keys into movement so
    * you can walk along a long wall without dropping out of paint mode.
    */
@@ -323,6 +438,7 @@ export class PaintMode {
       paintLeft: can?.amount ?? 0,
       drips: surface?.activeDripCount ?? 0,
       repositioning: this.repositioning,
+      guided: this.guided ? this.guided.status() : null,
     };
   }
 
@@ -381,6 +497,15 @@ export class PaintMode {
       this.bus.emit("toast", { text: "Base coat down", kind: "good", ttl: 1200 });
     }
 
+    if (this.input.wasKeyPressed("KeyF")) {
+      const label = this.toggleGuided();
+      this.bus.emit("toast", {
+        text: this.guided ? `Guided: ${label} — hold the spray button and follow the line` : label,
+        kind: "good",
+        ttl: 3200,
+      });
+    }
+
     if (this.input.wasKeyPressed("KeyT")) {
       this.stencilMode = !this.stencilMode;
       this.bus.emit("toast", {
@@ -400,6 +525,19 @@ export class PaintMode {
       if (this.input.isKeyDown("Comma")) this.stencilRotation -= 0.05;
       if (this.input.isKeyDown("Period")) this.stencilRotation += 0.05;
     }
+  }
+
+  /** Picks the cursor against one specific surface, ignoring its neighbours. */
+  private pickOn(surface: PaintableSurface): { u: number; v: number; distance: number } | null {
+    const pick = this.scene.pick(
+      this.input.pointerX,
+      this.input.pointerY,
+      (mesh: AbstractMesh) => mesh === surface.mesh,
+    );
+    if (!pick?.hit || pick.pickedMesh !== surface.mesh) return null;
+    const uv = pick.getTextureCoordinates();
+    if (!uv) return null;
+    return { u: uv.x, v: uv.y, distance: pick.distance };
   }
 
   /**

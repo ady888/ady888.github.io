@@ -189,6 +189,26 @@ export class Actor {
     this.arms[1].rotation.x += (target - this.arms[1].rotation.x) * blend;
   }
 
+  /**
+   * Points the can arm at a world position.
+   *
+   * Only the shoulder pitch and a little yaw — enough that the hand reads as
+   * following the line being painted without needing a real IK rig.
+   */
+  reachTowards(target: Vector3 | null, deltaSeconds: number): void {
+    const arm = this.arms[1];
+    const blend = Math.min(1, deltaSeconds * 8);
+    if (!target) {
+      arm.rotation.z += (0 - arm.rotation.z) * blend;
+      return;
+    }
+    const shoulder = this.root.position.add(new Vector3(0, this.eyeHeight * 0.78, 0));
+    const offset = target.subtract(shoulder);
+    const horizontal = Math.hypot(offset.x, offset.z);
+    const pitch = -Math.atan2(offset.y, Math.max(0.2, horizontal)) - Math.PI / 2;
+    arm.rotation.x += (Scalar.Clamp(pitch, -2.4, 0.4) - arm.rotation.x) * blend;
+  }
+
   /** Idle sway, so a stationary NPC does not look like a mannequin. */
   animateIdle(deltaSeconds: number): void {
     this.walkPhase += deltaSeconds * 1.6;

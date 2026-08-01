@@ -276,8 +276,35 @@ export class PaintHUD {
     this.coverageFill.style.width = `${Math.round(Math.min(1, state.coverage / 0.55) * 100)}%`;
     this.finishFill.style.width = `${Math.round(state.finishProgress * 100)}%`;
 
+
     const pressure = Math.round(state.pressure * 100);
     this.meta.innerHTML = "";
+
+    if (state.guided) {
+      const guided = state.guided;
+      this.meta.append(
+        el("div", {}, el("b", { text: guided.artworkName })),
+        el("div", {
+          text: `Line ${Math.min(guided.strokeIndex + 1, guided.strokeCount)} of ${guided.strokeCount} · ${Math.round(guided.progress * 100)}% done`,
+        }),
+        el("div", {
+          style: guided.offGuide ? "color:var(--warn)" : "color:var(--accent-2)",
+          text: guided.hint,
+        }),
+        el("div", { text: "F leaves the guide · hold E to finish" }),
+      );
+      this.coverageFill.style.width = `${Math.round(guided.progress * 100)}%`;
+      this.finishFill.style.width = `${Math.round(state.finishProgress * 100)}%`;
+      this.cursor.style.borderColor = guided.offGuide
+        ? "rgba(255,176,58,.9)"
+        : "rgba(53,224,196,.95)";
+      this.renderSwatches();
+      for (const button of this.capSeg.querySelectorAll("button")) {
+        button.classList.toggle("on", button.getAttribute("data-cap") === this.inventory.cap);
+      }
+      return;
+    }
+
     this.meta.append(
       el("div", {}, el("b", { text: state.surfaceLabel })),
       el("div", {
@@ -293,7 +320,7 @@ export class PaintHUD {
       el("div", {
         text: state.repositioning
           ? "Moving — release Shift to go back to aiming"
-          : "WASD aims · hold Shift + WASD to move · hold E to finish",
+          : "WASD aims · Shift+WASD moves · F for a guided piece · hold E to finish",
       }),
     );
 

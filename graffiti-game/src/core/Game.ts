@@ -1,5 +1,6 @@
 import { Scene } from "@babylonjs/core/scene";
-import { Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { Viewport } from "@babylonjs/core/Maths/math.viewport";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
 
 import { EventBus } from "./EventBus";
@@ -839,6 +840,20 @@ export class Game {
       }),
       shoot: () => this.takePhoto(),
       paintState: () => ({ ...this.paint.hudState(), interact: this.input.isDown("interact") }),
+      /** Screen position of the guided head, so a test can aim at it. */
+      guidedHeadScreen: () => {
+        const guided = this.paint.guidedSession;
+        if (!guided) return null;
+        const engine = this.engine;
+        const projected = Vector3.Project(
+          guided.headWorld,
+          Matrix.Identity(),
+          this.scene.getTransformMatrix(),
+          new Viewport(0, 0, engine.getRenderWidth(), engine.getRenderHeight()),
+        );
+        const scale = engine.getHardwareScalingLevel();
+        return { x: projected.x * scale, y: projected.y * scale };
+      },
     };
   }
 

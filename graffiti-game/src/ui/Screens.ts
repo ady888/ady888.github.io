@@ -55,6 +55,7 @@ export const PAINT_CONTROL_ROWS: Array<[string, string]> = [
   ["R", "Shake the can"],
   ["Z", "Undo last stroke"],
   ["B", "Lay a base coat"],
+  ["F", "Guided artwork — follow the line on the wall"],
   ["T", "Stencil mode ([ ] change, , . rotate)"],
   ["E", "Hold to finish the piece"],
   ["P", "Leave paint mode"],
