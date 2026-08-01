@@ -2,6 +2,8 @@ import { Engine } from "@babylonjs/core/Engines/engine";
 import { WebGPUEngine } from "@babylonjs/core/Engines/webgpuEngine";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
 
+import { missingEngineMethods } from "./BabylonSideEffects";
+
 export interface EngineBootResult {
   engine: AbstractEngine;
   backend: "webgpu" | "webgl2";
@@ -30,7 +32,22 @@ export async function createEngine(
         powerPreference: "high-performance",
       });
       await engine.initAsync();
-      return { engine, backend: "webgpu", fellBack: false };
+
+      // Verify the backend can actually do what the game needs before we build
+      // a world on top of it. Babylon's engine methods are added by side-effect
+      // modules per backend, so a missing import shows up as an absent method
+      // rather than a thrown error — which previously surfaced as a hard crash
+      // halfway through loading instead of a clean fallback here.
+      const missing = missingEngineMethods(engine);
+      if (missing.length > 0) {
+        console.warn(
+          `[EngineFactory] WebGPU engine is missing ${missing.join(", ")}; using WebGL 2 instead.`,
+        );
+        engine.dispose();
+        fellBack = true;
+      } else {
+        return { engine, backend: "webgpu", fellBack: false };
+      }
     } catch (error) {
       console.warn("[EngineFactory] WebGPU init failed, falling back to WebGL 2.", error);
       fellBack = true;
