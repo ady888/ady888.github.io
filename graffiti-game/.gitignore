@@ -1,0 +1,11 @@
+node_modules
+dist
+dist-standalone
+dist-package
+*.local
+.vite
+
+# Built output, assembled into the distributable zip by scripts/make-package.sh
+package/game
+package/alley-kings-single-file.html
+package/.browser-profile

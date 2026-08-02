@@ -6,3 +6,9 @@ title: Melbourne
 tagline: Most Liveable City 
 description: Born in Melbourne, reside in Melbourne.
 paginate: 10
+
+# The Babylon.js game lives in its own Vite project; keep its source out of the
+# published Jekyll site. Build it separately and copy graffiti-game/dist where
+# you want it served from.
+exclude:
+  - graffiti-game
