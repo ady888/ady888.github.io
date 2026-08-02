@@ -85,6 +85,10 @@ export class PaintMode {
   private onSurface = false;
   private repositioning = false;
   private cameraModeBeforePaint = false;
+  // Entry framing: turn to face the wall we just selected.
+  private framing = false;
+  private frameYaw = 0;
+  private framePitch = 0;
   /** Ops laid down since entering, shown in the HUD so "nothing happened" is visible. */
   private sprayedOps = 0;
   /** Every panel touched in this session — a piece can span several. */
@@ -188,6 +192,19 @@ export class PaintMode {
     this.input.releasePointerLock();
     this.scene.getEngine().getRenderingCanvas()?.classList.add("paint-mode");
 
+    // Turn to face the wall.
+    //
+    // `candidate()` can hand back a wall the player is standing beside rather
+    // than looking at — that is deliberate, so P works when you walk up to a
+    // surface. But without this the camera stays pointed wherever it was, the
+    // wall is off-screen, and the cursor can never touch it: paint mode opens
+    // and nothing you do puts paint down. Framing on entry is what makes the
+    // selected wall actually paintable.
+    const toSurface = surface.worldCentre.subtract(this.player.eyePosition);
+    this.frameYaw = Math.atan2(toSurface.x, toSurface.z);
+    this.framePitch = -Math.atan2(toSurface.y, Math.hypot(toSurface.x, toSurface.z));
+    this.framing = true;
+
     this.cameraModeBeforePaint = this.player.firstPerson;
     this.player.firstPerson = true;
     this.player.paintPose = true;
@@ -235,6 +252,7 @@ export class PaintMode {
 
   private restorePlayer(): void {
     this.stopSpraying();
+    this.framing = false;
     this.guided?.dispose();
     this.guided = null;
     this.player.setPaintTarget(null);
@@ -413,6 +431,23 @@ export class PaintMode {
     const forwardAxis = this.input.axis("back", "forward");
     const strafeAxis = this.input.axis("left", "right");
     this.repositioning = this.input.isDown("run");
+
+    // Settle onto the wall first. Any aim input cancels it, so this assists the
+    // player into position without ever taking the camera off them.
+    if (this.framing) {
+      if (forwardAxis !== 0 || strafeAxis !== 0) {
+        this.framing = false;
+      } else {
+        this.player.faceTowards(this.frameYaw, deltaSeconds, 7);
+        this.player.pitchTowards(this.framePitch, deltaSeconds, 7);
+        const settled =
+          Math.abs(normaliseAngle(this.player.aimYaw - this.frameYaw)) < 0.02 &&
+          Math.abs(this.player.aimPitch - this.framePitch) < 0.02;
+        if (settled) this.framing = false;
+        this.player.applyMovementFromAxes(deltaSeconds, 0, 0, 0);
+        return;
+      }
+    }
 
     if (this.repositioning) {
       this.player.applyMovementFromAxes(deltaSeconds, forwardAxis, strafeAxis, REPOSITION_SPEED);
@@ -654,4 +689,11 @@ export class PaintMode {
     this.spraying = false;
     this.audio.stopSpray();
   }
+}
+
+function normaliseAngle(angle: number): number {
+  let a = angle;
+  while (a > Math.PI) a -= Math.PI * 2;
+  while (a < -Math.PI) a += Math.PI * 2;
+  return a;
 }

@@ -24,6 +24,16 @@ Leave the terminal window open while you play - it is the little web
 server the game runs on. Close it, or press Ctrl+C in it, when you
 are finished.
 
+IMPORTANT: close the old Terminal window before running a NEW
+version. An old window is still serving the OLD copy of the game,
+and a browser tab pointed at it will keep showing the old build no
+matter how many updates you install. The launcher now detects this
+and tells you, rather than quietly starting a second server on a
+different port.
+
+The main menu shows a build date and time. If you ever report a
+problem, that number says which copy you are actually running.
+
 Nothing is installed on your machine. Nothing runs after you close
 that window. To uninstall, delete this folder.
 

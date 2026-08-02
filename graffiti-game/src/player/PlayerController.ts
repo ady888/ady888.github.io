@@ -163,6 +163,10 @@ export class PlayerController {
     return this.yaw;
   }
 
+  get aimPitch(): number {
+    return this.pitch;
+  }
+
   get isCrouching(): boolean {
     return this.stance === "crouch";
   }

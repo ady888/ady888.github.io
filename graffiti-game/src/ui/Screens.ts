@@ -134,7 +134,7 @@ export class MainMenu extends Screen {
           }),
           el("p", {
             style: "font-size:.78rem;opacity:.65",
-            text: `Renderer: ${backend.toUpperCase()} · everything is generated in-browser, no downloads.`,
+            text: `Renderer: ${backend.toUpperCase()} · build ${__BUILD_ID__}`,
           }),
           controlList(CONTROL_ROWS.slice(0, 9)),
         ),
@@ -249,6 +249,7 @@ export class PauseMenu extends Screen {
       ["Flicks taken", String(photosTaken)],
       ["Times nicked", String(profile.timesBusted)],
       ["Time on the street", formatDuration(profile.playtimeMs)],
+      ["Build", __BUILD_ID__],
     ];
     for (const [key, value] of rows) {
       this.stats.append(

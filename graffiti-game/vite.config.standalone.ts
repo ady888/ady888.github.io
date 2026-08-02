@@ -60,7 +60,10 @@ function inlineEverything(): Plugin {
   };
 }
 
+const BUILD_ID = new Date().toISOString().replace("T", " ").slice(0, 16);
+
 export default defineConfig({
+  define: { __BUILD_ID__: JSON.stringify(BUILD_ID) },
   base: "./",
   resolve: {
     alias: [
